@@ -5,6 +5,7 @@
 
 #include "Engine/AssetManager.h"
 #include "Engine/StreamableManager.h"
+#include "Kismet/KismetSystemLibrary.h"
 
 // Sets default values
 ASceneDecoration::ASceneDecoration()
@@ -53,5 +54,38 @@ void ASceneDecoration::LoadResources()
 
 	if(MaterialRef.IsValid())
 		ActorMesh->SetMaterial(0, MaterialRef.Get());
+}
+
+void ASceneDecoration::LoadResourcesAsync(double Time)
+{
+	ExecutionStartTime = Time;
+	LocalExecStartTime = FPlatformTime::Seconds();
+
+	FStreamableDelegate StreamableDelegateMesh;
+	FStreamableDelegate StreamableDelegateMaterial;
+	StreamableDelegateMesh.BindUObject(this, &ASceneDecoration::OnResourcesLoaded, &MeshLoadHandler);
+	StreamableDelegateMaterial.BindUObject(this, &ASceneDecoration::OnResourcesLoaded, &MaterialLoadHandler);
+
+	FStreamableManager& StreamableManager = UAssetManager::Get().GetStreamableManager();
+	MeshLoadHandler = StreamableManager.RequestAsyncLoad(MeshRef.ToSoftObjectPath(), StreamableDelegateMesh);
+	MaterialLoadHandler = StreamableManager.RequestAsyncLoad(MaterialRef.ToSoftObjectPath(), StreamableDelegateMaterial);
+}
+
+void ASceneDecoration::OnResourcesLoaded(TSharedPtr<FStreamableHandle>* LoadedAsset)
+{
+	UStaticMesh* Mesh = Cast<UStaticMesh>(LoadedAsset->Get()->GetLoadedAsset());
+	UMaterial* Material = Cast<UMaterial>(LoadedAsset->Get()->GetLoadedAsset());
+	if(Mesh)
+	{
+		ActorMesh->SetStaticMesh(Mesh);
+	}
+	else if(Material)
+	{
+		ActorMesh->SetMaterial(0, Material);
+	}
+	FString TimeElapsed;
+	TimeElapsed = FString::Printf(TEXT("%s loaded its resources in %f seconds, and %f seconds after start of startup resource load."), *GetName(), ((FPlatformTime::Seconds() - LocalExecStartTime)), (FPlatformTime::Seconds() - ExecutionStartTime));
+	UE_LOG(LogTemp, Warning, TEXT("%s loaded its resources in %f seconds, and %f seconds after start of startup resource load."), *GetName(), ((FPlatformTime::Seconds() - LocalExecStartTime)), (FPlatformTime::Seconds() - ExecutionStartTime));
+	UKismetSystemLibrary::PrintString(this, TimeElapsed);
 }
 

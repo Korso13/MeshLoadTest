@@ -34,15 +34,15 @@ void ASceneDecorationManager::BeginPlay()
 		ASceneDecoration* Decoration = Cast<ASceneDecoration>(Actor);
 		if(Decoration)
 		{
-			Decoration->LoadResources();
+			Decoration->LoadResourcesAsync(start);
 		}
 	}
 
 	double end = FPlatformTime::Seconds();
 	FString TimeElapsed;
-	TimeElapsed = FString::Printf(TEXT("Code executed in %f seconds"), (end - start));
+	TimeElapsed = FString::Printf(TEXT("Scene manager code executed in %f seconds"), (end - start));
 
-	UE_LOG(LogTemp, Warning, TEXT("Code executed in %f seconds."), (end - start));
+	UE_LOG(LogTemp, Warning, TEXT("Scene manager code executed in %f seconds."), (end - start));
 	UKismetSystemLibrary::PrintString(this, TimeElapsed);
 
 }

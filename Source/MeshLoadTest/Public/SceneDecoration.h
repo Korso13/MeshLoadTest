@@ -25,6 +25,12 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSoftObjectPtr<UMaterial> MaterialRef;
 	
+	TSharedPtr<struct FStreamableHandle> MeshLoadHandler;
+	TSharedPtr<FStreamableHandle> MaterialLoadHandler;
+
+	double ExecutionStartTime;
+	double LocalExecStartTime;
+	
 public:	
 	// Sets default values for this actor's properties
 	ASceneDecoration();
@@ -38,4 +44,8 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	void LoadResources();
+
+	void LoadResourcesAsync(double Time);
+
+	void OnResourcesLoaded(TSharedPtr<FStreamableHandle>* LoadedAsset);
 };
